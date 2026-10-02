@@ -1,0 +1,59 @@
+-- Matrix Overdrive Anti-Hit, Anti-Slap & Anti-Fling for Delta
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local IMPACT_THRESHOLD = 40 
+local FORCE_ANCHOR_DURATION = 0.15 
+local BLOCK_ALL_STATES = true
+
+print("[Delta Matrix] Initializing God-Tier Protection...")
+
+local lastHitTime = 0
+local connection
+connection = RunService.Heartbeat:Connect(function()
+    pcall(function()
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        
+        if rootPart then
+            local vel = rootPart.AssemblyLinearVelocity
+            local spin = rootPart.AssemblyAngularVelocity
+            
+            if vel.Magnitude > IMPACT_THRESHOLD or spin.Magnitude > 15 then
+                lastHitTime = tick()
+                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                rootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+            end
+            
+            if tick() - lastHitTime < FORCE_ANCHOR_DURATION then
+                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
+        end
+        
+        if humanoid and BLOCK_ALL_STATES then
+            local badStates = {
+                Enum.HumanoidStateType.Ragdoll,
+                Enum.HumanoidStateType.FallingDown,
+                Enum.HumanoidStateType.PlatformStanding,
+                Enum.HumanoidStateType.Stun,
+                Enum.HumanoidStateType.Swimming
+            }
+            
+            for _, state in ipairs(badStates) do
+                if humanoid:GetState() == state then
+                    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                end
+            end
+            
+            if humanoid.Sit then
+                humanoid.Sit = false
+            end
+        end
+    end)
+end)
+
+print("[Delta Matrix] MAXIMUM PROTECTION ACTIVATED. You are untouchable.")
